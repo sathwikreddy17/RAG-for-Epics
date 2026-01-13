@@ -1,0 +1,69 @@
+# Locked, known-good dependency set for enabling 2026 features without TensorFlow
+#
+# Goal:
+# - Keep SentenceTransformers model loading stable (avoid TF + numpy/protobuf dtype issues)
+# - Enable BM25 + hybrid search + query routing + context compression
+# - Keep evaluation tooling optional (ragas not included here)
+#
+# Usage:
+#   python3 -m venv venv_rag_2026
+#   source venv_rag_2026/bin/activate
+#   pip install -U pip
+#   pip install -r requirements_fixed.txt
+
+# -------- Core ML stack (pin to avoid dependency drift) --------
+numpy==1.24.4
+# NOTE: torch wheel availability varies by OS/Python; if this pin fails, relax to torch>=2.0.0
+# or install the appropriate wheel from https://pytorch.org
+# torch==2.8.0
+sentence-transformers==3.3.1
+transformers==4.45.0
+
+# Prevent accidental TensorFlow installs (we intentionally do NOT depend on it)
+# tensorflow
+
+# -------- RAG / Vector DB --------
+lancedb>=0.3.1
+pyarrow>=14.0.0
+pandas>=2.0.0
+
+# -------- API / Server --------
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+jinja2>=3.1.2
+python-multipart>=0.0.6
+aiofiles>=23.2.0
+
+# -------- Text processing --------
+tiktoken>=0.5.1
+nltk>=3.8.1
+
+# Language detection (lightweight; used for optional translation pipeline)
+langdetect>=1.0.9
+
+# -------- LLM client --------
+openai>=1.3.0
+httpx>=0.25.0
+
+# Used by ingest-time translation fallback in phase2_embed.py (if enabled)
+requests>=2.31.0
+
+# -------- Document processing --------
+pypdf>=3.17.0
+PyMuPDF>=1.23.0
+python-docx>=1.1.0
+docx2txt>=0.8
+
+# -------- Utilities --------
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+tqdm>=4.66.0
+psutil>=5.9.0
+watchdog>=3.0.0
+
+# -------- 2026 upgrades (safe) --------
+rank-bm25==0.2.2
+
+# -------- Optional evaluation stack (install in separate env) --------
+# ragas and its heavy dependency chain are intentionally excluded here.
+# If you must use it, install in a dedicated evaluation environment.

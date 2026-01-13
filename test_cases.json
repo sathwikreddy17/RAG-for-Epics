@@ -1,0 +1,42 @@
+[
+  {
+    "question": "What is the Mahabharata about?",
+    "ground_truth": "The Mahabharata is an ancient Indian epic that narrates the Kurukshetra War and the fates of the Kaurava and Pandava princes."
+  },
+  {
+    "question": "Who are the main characters in the Ramayana?",
+    "ground_truth": "The main characters include Rama, Sita, Lakshmana, Hanuman, and Ravana."
+  },
+  {
+    "question": "Who killed Ravana?",
+    "ground_truth": "Rama killed Ravana in battle."
+  },
+  {
+    "question": "How many days did the Kurukshetra war last?",
+    "ground_truth": "The Kurukshetra war lasted for 18 days."
+  },
+  {
+    "question": "What is dharma?",
+    "ground_truth": "Dharma refers to righteous duty, moral law, and the path of righteousness in Hindu philosophy."
+  },
+  {
+    "question": "Who was Arjuna's charioteer?",
+    "ground_truth": "Krishna was Arjuna's charioteer during the Kurukshetra war."
+  },
+  {
+    "question": "What is the Bhagavad Gita?",
+    "ground_truth": "The Bhagavad Gita is a sacred Hindu text that is part of the Mahabharata, containing Krishna's teachings to Arjuna."
+  },
+  {
+    "question": "Who were the Pandavas?",
+    "ground_truth": "The Pandavas were the five brothers: Yudhishthira, Bhima, Arjuna, Nakula, and Sahadeva."
+  },
+  {
+    "question": "What was Hanuman's role in the Ramayana?",
+    "ground_truth": "Hanuman was a devoted follower of Rama who helped rescue Sita from Ravana and played a crucial role in the war."
+  },
+  {
+    "question": "Why did Rama go into exile?",
+    "ground_truth": "Rama went into exile for 14 years to honor his father's promise to his stepmother Kaikeyi."
+  }
+]

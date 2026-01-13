@@ -1,0 +1,26 @@
+# Evaluation-only dependency set (kept separate from runtime to avoid ML stack conflicts)
+#
+# Create a separate venv for evaluation:
+#   python3 -m venv venv_eval
+#   source venv_eval/bin/activate
+#   pip install -U pip
+#   pip install -r requirements_eval.txt
+
+# Keep numpy compatible with common ML tooling; evaluation does not need the runtime pins.
+# If you want maximum safety, you can also pin numpy==1.24.4 here.
+numpy>=1.24.0,<1.27.0
+
+# RAGAS and its dependency chain
+ragas>=0.1.20,<0.2.0
+datasets>=2.14.0,<3.0.0
+
+# Often required transitively / for metrics
+langchain-community
+langchain
+
+# Convenience
+pandas>=2.0.0
+pyarrow>=14.0.0
+
+# If you run evaluation against your local API
+httpx>=0.25.0

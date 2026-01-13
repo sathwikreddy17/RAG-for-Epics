@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.pkl
+*.pickle
+*.log
+*.sqlite
+*.db
+
+# Virtual environments
+.venv/
+venv/
+venv_*/
+venv_rag_2026/
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local runtime artifacts
+server.log
+server_debug.log
+server_simple.log
+*.pid
+
+# Data / indexes (often large & regenerable)
+data/
+# If you want to version 'data/', remove the line above.
+
+# LanceDB & embedding artifacts (regenerable)
+**/lancedb/
+**/*.lance
+
+# Evaluation outputs
+*_report.*
+reports/
+
+# Secrets
+.env
+.env.*

@@ -1,0 +1,287 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║              🎉 RAG SYSTEM - READY FOR UAT TESTING! 🎉                 ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+✅ SERVER STATUS: RUNNING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 Frontend URL:  http://localhost:8000
+📊 Health Check:  http://localhost:8000/api/health
+📈 Statistics:    http://localhost:8000/api/stats
+
+Server Process:   ✅ Running (PID: 46996)
+Backend Status:   ✅ Healthy
+Database:         ✅ Connected (9,199 chunks)
+Embedding Model:  ✅ Loaded (BAAI/bge-large-en-v1.5)
+LM Studio:        http://localhost:1234/v1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 UAT TESTING GUIDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: OPEN THE FRONTEND
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open in your browser:
+   http://localhost:8000
+
+What to check:
+   ✓ Beautiful purple gradient background
+   ✓ "Local RAG System" title with gradient text
+   ✓ Text input area (textarea)
+   ✓ "Ask Question" button
+   ✓ "Show sources" checkbox
+   ✓ Stats showing "9,199" chunks at bottom
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 2: TEST BASIC QUESTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Try this question:
+   "Who is Kaikeyi?"
+
+Expected behavior:
+   1. Loading spinner appears
+   2. Button shows "Searching..."
+   3. Button becomes disabled
+   4. Wait ~5-15 seconds
+   5. Answer appears with sources
+   6. Sources show with percentages (e.g., "50.0% match")
+   7. Page numbers display correctly
+
+What to verify:
+   ✓ Answer is relevant and readable
+   ✓ Sources section shows multiple results
+   ✓ Percentages show correctly (50.0%, not 0.5)
+   ✓ Page numbers display (e.g., "Page 123")
+   ✓ File names display cleanly
+   ✓ Source text is truncated if long
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 3: TEST DIFFERENT QUESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Try these questions:
+   ❓ "What is Ramayana about?"
+   ❓ "Who are the main characters in Mahabharata?"
+   ❓ "Tell me about dharma"
+   ❓ "What happened in the forest?"
+
+For each question, verify:
+   ✓ Different answers for different questions
+   ✓ Sources are relevant to the question
+   ✓ No crashes or errors
+   ✓ UI remains responsive
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 4: TEST UI FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Test these features:
+
+1. Auto-expanding textarea:
+   ✓ Type a long question
+   ✓ Textarea should expand automatically
+
+2. Checkbox toggle:
+   ✓ Uncheck "Show sources"
+   ✓ Ask a question
+   ✓ Sources should not appear
+   ✓ Only answer appears
+
+3. Multiple queries:
+   ✓ Ask first question, wait for answer
+   ✓ Ask second question immediately after
+   ✓ Should work without issues
+
+4. Empty input:
+   ✓ Try submitting empty question
+   ✓ Should show validation error
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 5: TEST ERROR HANDLING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Test edge cases:
+
+1. LM Studio not running:
+   • Stop LM Studio
+   • Ask a question
+   • Should show user-friendly error
+   • Should not crash
+
+2. Very long question:
+   • Type 500+ words
+   • Submit
+   • Should handle gracefully
+
+3. Special characters:
+   • Try: "What's the meaning of @#$%?"
+   • Should not break
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 6: TEST RESPONSIVE DESIGN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Resize browser window:
+   ✓ Make it narrow (mobile size)
+   ✓ UI should adapt
+   ✓ All elements visible
+   ✓ No horizontal scroll
+
+2. Zoom in/out:
+   ✓ Cmd/Ctrl + and -
+   ✓ UI should scale properly
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 7: TEST AUTOMATION SYSTEM (BONUS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open new terminal and start watcher:
+   ./watch_and_process.sh
+
+Then:
+   1. Copy a small PDF to documents/
+   2. Watch watcher terminal for progress
+   3. Wait for "SUCCESS!" message
+   4. Refresh browser (optional, auto-reloads)
+   5. Ask question about new document
+   6. Should work immediately!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 UAT CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Visual/UI:
+   [ ] Purple gradient background visible
+   [ ] All text readable
+   [ ] Buttons look good
+   [ ] Animations smooth
+   [ ] No visual glitches
+
+Functionality:
+   [ ] Can submit questions
+   [ ] Answers appear correctly
+   [ ] Sources display with percentages
+   [ ] Page numbers show correctly
+   [ ] Checkbox works
+   [ ] Multiple queries work
+
+Performance:
+   [ ] Response time acceptable (5-30 sec)
+   [ ] No hanging or freezing
+   [ ] UI remains responsive
+   [ ] No memory leaks over time
+
+Error Handling:
+   [ ] Empty input handled
+   [ ] LM Studio errors friendly
+   [ ] Network errors caught
+   [ ] No crashes
+
+Mobile/Responsive:
+   [ ] Works on narrow screens
+   [ ] Zooming works
+   [ ] Touch targets adequate
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🐛 KNOWN BEHAVIORS (NOT BUGS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+These are EXPECTED:
+
+1. Slow response (10-30 seconds)
+   → Normal for large LLMs
+
+2. "No relevant information" answer
+   → Normal if question doesn't match documents
+
+3. Error if LM Studio not running
+   → Expected, need LM Studio running
+
+4. First query slower than subsequent
+   → Model loading, normal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🛠️ USEFUL COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Check server logs:
+   tail -f server.log
+
+Test API directly:
+   curl http://localhost:8000/api/health
+
+Stop server:
+   pkill -f "uvicorn app.main:app"
+
+Restart server:
+   ./run.sh
+
+Check database stats:
+   curl http://localhost:8000/api/stats | python3 -m json.tool
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 SUCCESS CRITERIA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+UAT passes if:
+   ✅ All UI elements look good
+   ✅ Can ask questions and get answers
+   ✅ Sources display correctly with percentages
+   ✅ No crashes or freezes
+   ✅ Error messages are user-friendly
+   ✅ Responsive design works
+
+Minor issues acceptable:
+   ⚠️ Slow response times (LLM limitation)
+   ⚠️ Occasional "no info" answers (query mismatch)
+
+Blocking issues (report immediately):
+   ❌ UI not loading
+   ❌ Crashes on questions
+   ❌ Percentages showing as 0.5 instead of 50.0
+   ❌ Sources not displaying
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📞 IF ISSUES FOUND
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Check browser console for errors:
+   • Right-click → Inspect → Console tab
+   • Look for red errors
+   • Take screenshot
+
+2. Check server logs:
+   tail -50 server.log
+
+3. Note these details:
+   • What you were doing
+   • What happened vs. what you expected
+   • Browser version
+   • Any error messages
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 READY TO TEST!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Frontend URL: http://localhost:8000
+
+Start testing! 🚀
+
+Good luck with UAT! Everything should work perfectly. 💪

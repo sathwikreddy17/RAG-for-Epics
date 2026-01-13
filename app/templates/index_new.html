@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Explorer - Ramayana & Mahabharata</title>
+    <meta name="description" content="AI-powered exploration of Indian epics - Ramayana and Mahabharata">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
+    <link rel="stylesheet" href="/static/css/themes.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">📜</div>
+                <div>
+                    <div class="logo-text">Epic Explorer</div>
+                    <div class="logo-subtitle">Ramayana & Mahabharata</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="status-indicator" id="statusIndicator">
+                    <span class="status-dot"></span>
+                    <span id="statusText">LLM Connected</span>
+                </div>
+                
+                <!-- Theme Selector Dropdown -->
+                <div class="theme-selector">
+                    <button class="theme-toggle-btn" onclick="toggleThemeDropdown()">
+                        🎨 <span id="currentThemeName">Navy</span> ▾
+                    </button>
+                    <div class="theme-dropdown" id="themeDropdown">
+                        <div class="theme-section-label">🌙 Dark Themes</div>
+                        <div class="theme-grid">
+                            <button class="theme-btn default active" onclick="setTheme('', 'Navy')">Navy</button>
+                            <button class="theme-btn charcoal" onclick="setTheme('theme-charcoal', 'Charcoal')">Charcoal</button>
+                            <button class="theme-btn purple" onclick="setTheme('theme-purple', 'Purple')">Purple</button>
+                            <button class="theme-btn forest" onclick="setTheme('theme-forest', 'Forest')">Forest</button>
+                            <button class="theme-btn midnight" onclick="setTheme('theme-midnight', 'Midnight')">Midnight</button>
+                            <button class="theme-btn coffee" onclick="setTheme('theme-coffee', 'Coffee')">Coffee</button>
+                            <button class="theme-btn ocean" onclick="setTheme('theme-ocean', 'Ocean')">Ocean</button>
+                            <button class="theme-btn slate" onclick="setTheme('theme-slate', 'Slate')">Slate</button>
+                            <button class="theme-btn obsidian" onclick="setTheme('theme-obsidian', 'Obsidian')">Obsidian</button>
+                            <button class="theme-btn burgundy" onclick="setTheme('theme-burgundy', 'Burgundy')">Burgundy</button>
+                        </div>
+                        <div class="theme-section-label">☀️ Light Themes</div>
+                        <div class="theme-grid">
+                            <button class="theme-btn light-cream" onclick="setTheme('theme-light-cream', 'Cream')">Cream</button>
+                            <button class="theme-btn light-blue" onclick="setTheme('theme-light-blue', 'Blue')">Blue</button>
+                            <button class="theme-btn light-lavender" onclick="setTheme('theme-light-lavender', 'Lavender')">Lavender</button>
+                            <button class="theme-btn light-mint" onclick="setTheme('theme-light-mint', 'Mint')">Mint</button>
+                            <button class="theme-btn light-white" onclick="setTheme('theme-light-white', 'White')">White</button>
+                            <button class="theme-btn light-sand" onclick="setTheme('theme-light-sand', 'Sand')">Sand</button>
+                            <button class="theme-btn light-rose" onclick="setTheme('theme-light-rose', 'Rose')">Rose</button>
+                            <button class="theme-btn light-peach" onclick="setTheme('theme-light-peach', 'Peach')">Peach</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="icon-btn" title="Settings">⚙️</button>
+                <button class="icon-btn" title="History">📋</button>
+                <button class="icon-btn" title="Help">❓</button>
+            </div>
+        </header>
+
+        <!-- Left Sidebar -->
+        <aside class="sidebar-left">
+            <nav class="nav-section">
+                <div class="nav-label">Explore</div>
+                <div class="nav-item active" data-page="search">
+                    <span>🔍</span>
+                    <span>Ask Questions</span>
+                </div>
+                <div class="nav-item" data-page="characters">
+                    <span>👤</span>
+                    <span>Characters</span>
+                    <span class="nav-badge" id="navCharacters">-</span>
+                </div>
+                <div class="nav-item" data-page="timeline">
+                    <span>📅</span>
+                    <span>Timeline</span>
+                    <span class="nav-badge" id="navEvents">-</span>
+                </div>
+                <div class="nav-item" data-page="relationships">
+                    <span>🕸️</span>
+                    <span>Relationships</span>
+                </div>
+            </nav>
+
+            <nav class="nav-section">
+                <div class="nav-label">Tools</div>
+                <div class="nav-item" data-page="citations">
+                    <span>📚</span>
+                    <span>Citations</span>
+                </div>
+                <div class="nav-item" data-page="export">
+                    <span>💾</span>
+                    <span>Export</span>
+                </div>
+                <div class="nav-item" data-page="analytics">
+                    <span>📊</span>
+                    <span>Analytics</span>
+                </div>
+            </nav>
+
+            <div class="doc-filter">
+                <div class="doc-filter-label">Filter by Source</div>
+                <select class="doc-select" id="docSelect">
+                    <option value="">All Documents</option>
+                </select>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="statChunks">-</div>
+                    <div class="stat-label">Chunks</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statCharacters">-</div>
+                    <div class="stat-label">Characters</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statEvents">-</div>
+                    <div class="stat-label">Events</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statRelations">-</div>
+                    <div class="stat-label">Relations</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="search-area">
+                <div class="search-container">
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            class="search-input" 
+                            id="searchInput"
+                            placeholder="Ask about Ramayana or Mahabharata..."
+                            autocomplete="off"
+                        >
+                        <button class="search-btn" id="searchBtn">
+                            <span>✨</span>
+                            <span>Ask</span>
+                        </button>
+                    </div>
+                    <div class="search-options">
+                        <label class="search-option">
+                            <input type="checkbox" id="streamCheckbox" checked>
+                            <span>Stream response</span>
+                        </label>
+                        <label class="search-option">
+                            <input type="checkbox" id="sourcesCheckbox" checked>
+                            <span>Include sources</span>
+                        </label>
+                        <label class="search-option">
+                            <input type="checkbox" id="deepSearchCheckbox">
+                            <span>Deep search</span>
+                        </label>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="askQuestion('Who is Hanuman?')">👤 Who is Hanuman?</button>
+                        <button class="quick-btn" onclick="askQuestion('What happened in the Battle of Kurukshetra?')">⚔️ Battle of Kurukshetra</button>
+                        <button class="quick-btn" onclick="askQuestion('Tell me about Rama and Sita')">💕 Rama and Sita</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-area" id="resultsArea">
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-state-icon">📜</div>
+                    <div class="empty-state-title">Explore the Epics</div>
+                    <div class="empty-state-text">
+                        Ask questions about the Ramayana and Mahabharata. Discover characters, events, relationships, and more from these ancient Indian epics.
+                    </div>
+                </div>
+
+                <!-- Answer Card (hidden initially) -->
+                <div class="answer-card hidden" id="answerCard">
+                    <div class="answer-header">
+                        <div class="answer-title">
+                            <div class="answer-icon">💡</div>
+                            <div>
+                                <div style="font-weight: 600;">Answer</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Based on retrieved sources</div>
+                            </div>
+                        </div>
+                        <div class="answer-meta" id="answerMeta">
+                            <span>⏱️ -</span>
+                            <span>📝 - chars</span>
+                        </div>
+                    </div>
+                    <div class="answer-body">
+                        <div class="answer-text" id="answerText"></div>
+                    </div>
+                    <div class="answer-actions">
+                        <div class="action-group">
+                            <button class="action-btn" onclick="copyAnswer()">📋 Copy</button>
+                            <button class="action-btn" onclick="exportAnswer('markdown')">💾 Export</button>
+                            <button class="action-btn" onclick="getCitation('bibtex')">📚 Cite</button>
+                        </div>
+                        <div class="rating">
+                            <span class="rating-label">Rate:</span>
+                            <div class="rating-stars">
+                                <span class="star" data-rating="1">★</span>
+                                <span class="star" data-rating="2">★</span>
+                                <span class="star" data-rating="3">★</span>
+                                <span class="star" data-rating="4">★</span>
+                                <span class="star" data-rating="5">★</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sources Section -->
+                <div class="sources-section hidden" id="sourcesSection">
+                    <div class="sources-header">
+                        <div class="sources-title">📖 Sources (<span id="sourcesCount">0</span>)</div>
+                        <button class="action-btn" style="font-size: 12px;">Expand All</button>
+                    </div>
+                    <div class="sources-grid" id="sourcesGrid"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="sidebar-right">
+            <div class="panel hidden" id="relatedPanel">
+                <div class="panel-header">
+                    <div class="panel-title">❓ Related Questions</div>
+                </div>
+                <div class="panel-body" id="relatedList"></div>
+            </div>
+
+            <div class="panel hidden" id="characterPanel">
+                <!-- Character card will be rendered dynamically -->
+            </div>
+
+            <!-- Default panels when no query -->
+            <div class="panel" id="tipsPanel">
+                <div class="panel-header">
+                    <div class="panel-title">💡 Tips</div>
+                </div>
+                <div class="panel-body">
+                    <div class="related-item">Ask about specific characters like Rama, Krishna, or Arjuna</div>
+                    <div class="related-item">Explore events like the exile of Rama or the Kurukshetra war</div>
+                    <div class="related-item">Discover relationships between characters</div>
+                    <div class="related-item">Use "Deep search" for complex questions</div>
+                </div>
+            </div>
+
+            <div class="panel" id="recentPanel">
+                <div class="panel-header">
+                    <div class="panel-title">🕐 Popular Questions</div>
+                </div>
+                <div class="panel-body">
+                    <div class="related-item" onclick="askQuestion('Who is Rama?')">Who is Rama?</div>
+                    <div class="related-item" onclick="askQuestion('What is the significance of the Bhagavad Gita?')">Significance of Bhagavad Gita</div>
+                    <div class="related-item" onclick="askQuestion('Who killed Ravana?')">Who killed Ravana?</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+/* ============================================
+   EPIC EXPLORER - Theme System
+   18 color themes (10 dark, 8 light)
+   ============================================ */
+
+:root {
+    /* Accent Colors (constant across themes) */
+    --saffron: #FF9933;
+    --saffron-light: #FFB366;
+    --saffron-dark: #E67300;
+    --purple: #5E35B1;
+    --purple-light: #7E57C2;
+    --gold: #FFD700;
+    --success: #4CAF50;
+    --error: #EF5350;
+    --warning: #FFA726;
+    
+    /* Default Theme: Navy */
+    --bg-primary: #0D1B2A;
+    --bg-secondary: #1B263B;
+    --bg-tertiary: #243447;
+    --bg-card: #1E3A5F;
+    --bg-hover: #2D4A6F;
+    
+    --text-primary: #F5F5F5;
+    --text-secondary: #B0BEC5;
+    --text-muted: #78909C;
+}
+
+/* ===== DARK THEMES ===== */
+
+/* Theme 1: Charcoal */
+.theme-charcoal {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #252525;
+    --bg-tertiary: #2d2d2d;
+    --bg-card: #333333;
+    --bg-hover: #404040;
+}
+
+/* Theme 2: Purple */
+.theme-purple {
+    --bg-primary: #1a1625;
+    --bg-secondary: #252035;
+    --bg-tertiary: #2d2840;
+    --bg-card: #362f4a;
+    --bg-hover: #443b5c;
+}
+
+/* Theme 3: Forest */
+.theme-forest {
+    --bg-primary: #0f1a14;
+    --bg-secondary: #162420;
+    --bg-tertiary: #1e2e28;
+    --bg-card: #263830;
+    --bg-hover: #2f4238;
+}
+
+/* Theme 4: Midnight */
+.theme-midnight {
+    --bg-primary: #0a0f1a;
+    --bg-secondary: #111827;
+    --bg-tertiary: #1f2937;
+    --bg-card: #293548;
+    --bg-hover: #374151;
+}
+
+/* Theme 5: Coffee */
+.theme-coffee {
+    --bg-primary: #1c1816;
+    --bg-secondary: #28221e;
+    --bg-tertiary: #352d27;
+    --bg-card: #3d342d;
+    --bg-hover: #4a403a;
+}
+
+/* Theme 6: Ocean */
+.theme-ocean {
+    --bg-primary: #0a1628;
+    --bg-secondary: #0f2035;
+    --bg-tertiary: #152a42;
+    --bg-card: #1a3550;
+    --bg-hover: #234160;
+}
+
+/* Theme 7: Slate */
+.theme-slate {
+    --bg-primary: #1e1e24;
+    --bg-secondary: #27272f;
+    --bg-tertiary: #32323c;
+    --bg-card: #3d3d49;
+    --bg-hover: #4a4a58;
+}
+
+/* Theme 8: Obsidian */
+.theme-obsidian {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --bg-tertiary: #2a2a2a;
+    --bg-card: #363636;
+    --bg-hover: #424242;
+}
+
+/* Theme 9: Burgundy */
+.theme-burgundy {
+    --bg-primary: #1a1014;
+    --bg-secondary: #2a1a20;
+    --bg-tertiary: #3a252d;
+    --bg-card: #4a303a;
+    --bg-hover: #5a3a45;
+}
+
+/* ===== LIGHT THEMES ===== */
+
+/* Theme 10: Cream */
+.theme-light-cream {
+    --bg-primary: #FAF8F5;
+    --bg-secondary: #F5F2ED;
+    --bg-tertiary: #EDE8E0;
+    --bg-card: #FFFFFF;
+    --bg-hover: #E8E3D9;
+    
+    --text-primary: #2D2A26;
+    --text-secondary: #5C5650;
+    --text-muted: #8A847C;
+    
+    --saffron: #E07800;
+    --purple: #6B4BA3;
+}
+
+/* Theme 11: Blue */
+.theme-light-blue {
+    --bg-primary: #F0F4F8;
+    --bg-secondary: #E8EEF4;
+    --bg-tertiary: #DCE5EE;
+    --bg-card: #FFFFFF;
+    --bg-hover: #D0DCE8;
+    
+    --text-primary: #1A2B3C;
+    --text-secondary: #4A5E6F;
+    --text-muted: #7A8E9F;
+    
+    --saffron: #D56B00;
+    --purple: #5E4B9E;
+}
+
+/* Theme 12: Lavender */
+.theme-light-lavender {
+    --bg-primary: #F8F6FC;
+    --bg-secondary: #F0ECF8;
+    --bg-tertiary: #E6E0F2;
+    --bg-card: #FFFFFF;
+    --bg-hover: #DCD4EC;
+    
+    --text-primary: #2A2640;
+    --text-secondary: #524D68;
+    --text-muted: #7A7590;
+    
+    --saffron: #D96800;
+    --purple: #7B5DC2;
+}
+
+/* Theme 13: Mint */
+.theme-light-mint {
+    --bg-primary: #F2FAF6;
+    --bg-secondary: #E8F5EE;
+    --bg-tertiary: #DCEEE4;
+    --bg-card: #FFFFFF;
+    --bg-hover: #D0E8DA;
+    
+    --text-primary: #1C3028;
+    --text-secondary: #3D5C4A;
+    --text-muted: #6A8A78;
+    
+    --saffron: #D07000;
+    --purple: #5A6B9E;
+}
+
+/* Theme 14: White */
+.theme-light-white {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F8F9FA;
+    --bg-tertiary: #F1F3F4;
+    --bg-card: #FFFFFF;
+    --bg-hover: #E8EAED;
+    
+    --text-primary: #202124;
+    --text-secondary: #5F6368;
+    --text-muted: #9AA0A6;
+    
+    --saffron: #D56000;
+    --purple: #6750A4;
+}
+
+/* Theme 15: Sand */
+.theme-light-sand {
+    --bg-primary: #FBF9F4;
+    --bg-secondary: #F6F2E9;
+    --bg-tertiary: #EEE8DB;
+    --bg-card: #FFFFFF;
+    --bg-hover: #E5DCC9;
+    
+    --text-primary: #3D3627;
+    --text-secondary: #635B48;
+    --text-muted: #958B74;
+    
+    --saffron: #C96B00;
+    --purple: #6D5B8A;
+}
+
+/* Theme 16: Rose */
+.theme-light-rose {
+    --bg-primary: #FDF8F8;
+    --bg-secondary: #F9F0F0;
+    --bg-tertiary: #F2E6E6;
+    --bg-card: #FFFFFF;
+    --bg-hover: #EBDBDB;
+    
+    --text-primary: #3D2A2A;
+    --text-secondary: #6B5050;
+    --text-muted: #9A8080;
+    
+    --saffron: #D06000;
+    --purple: #8B5A7A;
+}
+
+/* Theme 17: Peach */
+.theme-light-peach {
+    --bg-primary: #FFFAF5;
+    --bg-secondary: #FFF5EB;
+    --bg-tertiary: #FFEDDC;
+    --bg-card: #FFFFFF;
+    --bg-hover: #FFE4CC;
+    
+    --text-primary: #3D3020;
+    --text-secondary: #6B5840;
+    --text-muted: #9A8770;
+    
+    --saffron: #CC6600;
+    --purple: #7A5B8A;
+}
+
+/* Theme Selector Dropdown */
+.theme-selector {
+    position: relative;
+    display: inline-block;
+}
+
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg-tertiary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--saffron);
+    color: var(--text-primary);
+}
+
+.theme-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(255, 153, 51, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 320px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: none;
+    backdrop-filter: blur(10px);
+}
+
+.theme-dropdown.active {
+    display: block;
+    animation: dropIn 0.2s ease;
+}
+
+@keyframes dropIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.theme-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.theme-grid:last-child {
+    margin-bottom: 0;
+}
+
+.theme-btn {
+    width: 100%;
+    padding: 8px 4px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: white;
+    text-align: center;
+}
+
+.theme-btn:hover {
+    transform: scale(1.05);
+}
+
+.theme-btn.active {
+    border-color: var(--gold);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+/* Theme button colors */
+.theme-btn.default { background: linear-gradient(135deg, #0D1B2A, #1B263B); }
+.theme-btn.charcoal { background: linear-gradient(135deg, #1a1a1a, #333333); }
+.theme-btn.purple { background: linear-gradient(135deg, #1a1625, #362f4a); }
+.theme-btn.forest { background: linear-gradient(135deg, #0f1a14, #263830); }
+.theme-btn.midnight { background: linear-gradient(135deg, #0a0f1a, #1f2937); }
+.theme-btn.coffee { background: linear-gradient(135deg, #1c1816, #3d342d); }
+.theme-btn.ocean { background: linear-gradient(135deg, #0a1628, #1a3550); }
+.theme-btn.slate { background: linear-gradient(135deg, #1e1e24, #3d3d49); }
+.theme-btn.obsidian { background: linear-gradient(135deg, #121212, #363636); }
+.theme-btn.burgundy { background: linear-gradient(135deg, #1a1014, #4a303a); }
+
+/* Light theme buttons */
+.theme-btn.light-cream { background: linear-gradient(135deg, #FAF8F5, #EDE8E0); color: #2D2A26; }
+.theme-btn.light-blue { background: linear-gradient(135deg, #F0F4F8, #DCE5EE); color: #1A2B3C; }
+.theme-btn.light-lavender { background: linear-gradient(135deg, #F8F6FC, #E6E0F2); color: #2A2640; }
+.theme-btn.light-mint { background: linear-gradient(135deg, #F2FAF6, #DCEEE4); color: #1C3028; }
+.theme-btn.light-white { background: linear-gradient(135deg, #FFFFFF, #F1F3F4); color: #202124; }
+.theme-btn.light-sand { background: linear-gradient(135deg, #FBF9F4, #EEE8DB); color: #3D3627; }
+.theme-btn.light-rose { background: linear-gradient(135deg, #FDF8F8, #F2E6E6); color: #3D2A2A; }
+.theme-btn.light-peach { background: linear-gradient(135deg, #FFFAF5, #FFEDDC); color: #3D3020; }
