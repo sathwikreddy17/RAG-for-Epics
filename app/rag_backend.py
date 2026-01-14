@@ -39,6 +39,11 @@ _DEFAULT_ENTITY_SYNONYMS = {
     "arjuna": ["arjuna", "arjun", "partha", "dhananjaya", "kiriti"],
     "bharata": ["bharata", "bharat"],
     "dasaratha": ["dasaratha", "dasharath", "dashrath"],
+    # Ramayana: key aliases that often cause cross-epic drift if not normalized
+    "meghanada": ["meghanada", "meganada", "meghanad", "meghnath", "meganath", "indrajit"],
+    "indrajit": ["indrajit", "indrajeet", "meghanada", "meghnath", "meghanad", "meganath"],
+    "valmiki": ["valmiki", "vālmīki", "valmiki's"],
+    "vibhishana": ["vibhishana", "vibhishan", "bibhishana", "bibhishan"],
 }
 
 
@@ -67,6 +72,10 @@ def _load_entity_synonyms() -> Dict[str, List[str]]:
 
 _ENTITY_SYNONYMS = _load_entity_synonyms()
 _ENTITY_BOOST_WEIGHT = float(os.getenv("ENTITY_BOOST_WEIGHT", "0.15") or 0.15)  # Increased for better entity matching
+
+# Epic-aware retrieval bias (soft boost): helps prevent cross-epic mixing when deep search increases recall.
+_EPIC_BOOST_WEIGHT = float(os.getenv("EPIC_BOOST_WEIGHT", "0.20") or 0.20)
+_EPIC_MISMATCH_PENALTY = float(os.getenv("EPIC_MISMATCH_PENALTY", "0.10") or 0.10)
 
 
 def _expand_simple_query(query: str) -> str:
@@ -156,6 +165,87 @@ def _lexical_entity_boost(query: str, text: str) -> float:
                 boost += _ENTITY_BOOST_WEIGHT
 
     return boost
+
+
+def _detect_epic_bias(query: str, file_filter: Optional[str] = None) -> Optional[str]:
+    """Infer an intended epic from the query/filter.
+
+    Returns: "ramayana", "mahabharata", or None.
+    """
+    q = (query or "").lower()
+
+    # If user explicitly selected a file filter, treat it as a strong hint.
+    ff = (file_filter or "").lower().strip()
+    if ff and ff != "all":
+        if "ramayana" in ff or "ramayan" in ff or "valmiki" in ff:
+            return "ramayana"
+        if "mahabharata" in ff or "mahabharat" in ff:
+            return "mahabharata"
+
+    # Query cues (entity + explicit epic terms)
+    ramayana_cues = [
+        "ramayana", "ramayan", "valmiki",
+        "rama", "sita", "hanuman", "ravana", "lanka", "ayodhya",
+        "lakshmana", "bharata", "shatrughna", "dasharatha", "janaka",
+        "meghanada", "meghnath", "indrajit", "vibhishana", "kumbhakarna",
+        "sugreeva", "sugriva", "kishkindha", "vali", "bali",
+    ]
+    mahabharata_cues = [
+        "mahabharata", "mahabharat",
+        "pandava", "kaurava", "kurukshetra",
+        "arjuna", "krishna", "yudhishthira", "bhima", "draupadi",
+        "duryodhana", "karna", "bhishma", "drona", "ashwatthama",
+        "hastinapura",
+    ]
+
+    ramayana_hits = sum(1 for c in ramayana_cues if c in q)
+    mahabharata_hits = sum(1 for c in mahabharata_cues if c in q)
+
+    if ramayana_hits == 0 and mahabharata_hits == 0:
+        return None
+    if ramayana_hits >= mahabharata_hits:
+        return "ramayana"
+    return "mahabharata"
+
+
+def _infer_doc_epic(file_name: str) -> Optional[str]:
+    """Heuristic: infer epic from filename."""
+    f = (file_name or "").lower()
+    if not f:
+        return None
+    if "ramayana" in f or "ramayan" in f or "valmiki" in f:
+        return "ramayana"
+    if "mahabharata" in f or "mahabharat" in f:
+        return "mahabharata"
+    return None
+
+
+def _epic_bias_adjustment(
+    base_score: float,
+    query: str,
+    file_name: str,
+    intended_epic: Optional[str],
+) -> float:
+    """Apply a small boost/penalty based on epic match.
+
+    This is deliberately soft to avoid breaking cross-epic comparison questions.
+    """
+    if not intended_epic:
+        return base_score
+
+    doc_epic = _infer_doc_epic(file_name)
+    if not doc_epic:
+        return base_score
+
+    if doc_epic == intended_epic:
+        return base_score + _EPIC_BOOST_WEIGHT
+
+    # If query clearly asks for cross-epic comparison, avoid penalizing.
+    q = (query or "").lower()
+    if "compare" in q or "difference" in q or "both" in q or ("ramayana" in q and "mahabharata" in q):
+        return base_score
+
+    return max(0.0, base_score - _EPIC_MISMATCH_PENALTY)
 
 
 # --- Source Quality Filtering (configurable) ---
@@ -777,6 +867,9 @@ class RAGBackend:
         # Normalize query for retrieval (handles common transliteration variants)
         retrieval_query = _normalize_query_for_retrieval(query)
 
+        # Epic bias: use query + explicit filter to prefer the right epic during retrieval
+        intended_epic = _detect_epic_bias(query=retrieval_query, file_filter=file_filter)
+
         # Smart Query Routing
         routing_decision = None
         if self.query_router and self.use_query_routing:
@@ -837,11 +930,19 @@ class RAGBackend:
             # Add entity boost
             boost = _lexical_entity_boost(retrieval_query, doc.get("text", ""))
             boosted_score = base_sim + boost
-            
+
+            # Epic-aware boost/penalty (soft)
+            boosted_score = _epic_bias_adjustment(
+                base_score=boosted_score,
+                query=retrieval_query,
+                file_name=doc.get("file_name", ""),
+                intended_epic=intended_epic,
+            )
+
             # Apply quality adjustment (source weight + quality penalty)
             adjusted_score, _ = _apply_quality_adjustment(
-                boosted_score, 
-                doc.get("text", ""), 
+                boosted_score,
+                doc.get("text", ""),
                 doc.get("file_name", "")
             )
             boosted.append((adjusted_score, doc))
@@ -1541,7 +1642,7 @@ CRITICAL RULES:
         include_reranker: bool = True,
     ) -> Dict[str, Any]:
         """Run retrieval and return a score breakdown for observability/debugging.
-        
+
         Args:
             query: Search query
             k: Number of results to return
@@ -1556,12 +1657,13 @@ CRITICAL RULES:
 
         retrieval_query = _normalize_query_for_retrieval(query)
 
-        # Mirror routing-driven top-k behavior (but default to debug-friendly k)
+        # Optional routing decision (informational in debug output)
         routing_decision = None
         if self.query_router and self.use_query_routing:
             routing_decision = self.query_router.route(query, context)
 
-        initial_k = max(self.top_k_initial, k * 4)
+        # Epic bias (debug visibility)
+        intended_epic = _detect_epic_bias(query=retrieval_query, file_filter=file_filter)
 
         bm25_map: Dict[str, Dict[str, Any]] = {}
         vector_map: Dict[str, Dict[str, Any]] = {}
@@ -1569,7 +1671,7 @@ CRITICAL RULES:
 
         # --- BM25 ---
         if self.bm25_index and self.bm25_index.is_built() and self.use_hybrid_search:
-            bm25_results = self.bm25_index.search(retrieval_query, k=initial_k)
+            bm25_results = self.bm25_index.search(retrieval_query, k=k)
             for r in bm25_results:
                 doc_id = r.get("doc_id")
                 if doc_id:
@@ -1577,7 +1679,7 @@ CRITICAL RULES:
 
         # --- Vector ---
         query_embedding = self.embedding_model.encode(retrieval_query)
-        vec_q = self.table.search(query_embedding).limit(initial_k)
+        vec_q = self.table.search(query_embedding).limit(k)
         if file_filter and file_filter != "all":
             vec_q = vec_q.where(f"file_name LIKE '%{file_filter}%'")
         vector_results = vec_q.to_list()
@@ -1591,11 +1693,11 @@ CRITICAL RULES:
         if self.hybrid_searcher and self.use_hybrid_search:
             fused_rows = self.hybrid_searcher.search(
                 query=retrieval_query,
-                k=initial_k,  # Get more candidates for reranking
+                k=k,  # Get more candidates for reranking
                 file_filter=file_filter,
             )
         else:
-            fused_rows = vector_results[:initial_k]
+            fused_rows = vector_results[:k]
 
         # --- Compute reranker scores if enabled and requested ---
         reranker_map: Dict[str, float] = {}
@@ -1652,13 +1754,18 @@ CRITICAL RULES:
                 # vector-only path: treat boosted vector similarity as fused
                 fused_score = (vector_score if vector_score is not None else 0.0) + entity_boost
 
-            # Get reranker score for this candidate
-            reranker_score = reranker_map.get(doc_id) if reranker_used else None
-
-            # Compute quality adjustment for this candidate
-            text = (vec_row or {}).get("text", "")
+            # Epic-aware adjustment (for debug display only)
             file_name = (vec_row or {}).get("file_name", "")
-            _, quality_info = _apply_quality_adjustment(fused_score, text, file_name)
+            doc_epic = _infer_doc_epic(file_name)
+            epic_adjusted_score = _epic_bias_adjustment(
+                base_score=float(fused_score) if fused_score is not None else 0.0,
+                query=retrieval_query,
+                file_name=file_name,
+                intended_epic=intended_epic,
+            )
+            epic_delta = round(epic_adjusted_score - (float(fused_score) if fused_score is not None else 0.0), 6)
+
+            # Get reranker score for this candidate
 
             candidates.append(
                 {
@@ -1670,21 +1777,27 @@ CRITICAL RULES:
                         "fused": float(fused_score) if fused_score is not None else None,
                         "entity_boost": float(entity_boost),
                         "reranker": reranker_score,
+                        "epic": {
+                            "intended": intended_epic,
+                            "doc_epic": doc_epic,
+                            "delta": epic_delta,
+                            "adjusted": epic_adjusted_score,
+                        },
                     },
-                    "quality": quality_info,
-                    "fusion": {
-                        "method": row.get("fusion_method") if isinstance(row, dict) else None,
-                        "bm25_rank": row.get("bm25_rank") if isinstance(row, dict) else None,
-                        "vector_rank": row.get("vector_rank") if isinstance(row, dict) else None,
-                    },
-                    "metadata": {
-                        "file_name": file_name,
-                        "page": (vec_row or {}).get("page_number"),
-                        "chunk_index": (vec_row or {}).get("chunk_index"),
-                        "text_preview": (text[:200] + "...") if text else None,
-                    },
-                }
-            )
+                                   "quality": quality_info,
+                "fusion": {
+                    "method": row.get("fusion_method") if isinstance(row, dict) else None,
+                    "bm25_rank": row.get("bm25_rank") if isinstance(row, dict) else None,
+                    "vector_rank": row.get("vector_rank") if isinstance(row, dict) else None,
+                },
+                "metadata": {
+                    "file_name": file_name,
+                    "page": (vec_row or {}).get("page_number"),
+                    "chunk_index": (vec_row or {}).get("chunk_index"),
+                                               "text_preview": (text[:200] + "...") if text else None,
+                },
+            }
+        )
 
         # Extract evidence if enabled
         evidence_result = None
@@ -1713,6 +1826,13 @@ CRITICAL RULES:
             "k": k,
             "file_filter": file_filter or "all",
             "routing": routing_decision,
+            "epic_bias": {
+                "enabled": True,
+                "intended_epic": intended_epic,
+                "boost_weight": _EPIC_BOOST_WEIGHT,
+                "mismatch_penalty": _EPIC_MISMATCH_PENALTY,
+                "note": "Soft boost/penalty only; cross-epic comparison queries are not penalized.",
+            },
             "reranker": {
                 "enabled": self.use_reranker,
                 "used_in_debug": reranker_used,

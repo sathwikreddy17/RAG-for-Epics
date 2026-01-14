@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
+"""Frontend Test - Check if all API endpoints work correctly
+
+Note: This file is a manual smoke-test script (run directly) and is **not** a pytest
+unit test module.
+
+Pytest collection is disabled via `__test__ = False` to avoid treating the helper
+function `test_endpoint` as a test that requires fixtures.
 """
-Frontend Test - Check if all API endpoints work correctly
-"""
+
+__test__ = False
 
 import requests
 import json
@@ -9,21 +16,22 @@ from pathlib import Path
 
 BASE_URL = "http://localhost:8000"
 
+
 def test_endpoint(name, method, url, data=None):
     """Test a single endpoint."""
     print(f"\n{'='*60}")
     print(f"Testing: {name}")
     print(f"URL: {url}")
     print(f"Method: {method}")
-    
+
     try:
         if method == "GET":
             response = requests.get(url, timeout=5)
         elif method == "POST":
             response = requests.post(url, json=data, timeout=30)
-        
+
         print(f"Status: {response.status_code}")
-        
+
         if response.status_code == 200:
             print("✅ SUCCESS")
             try:
@@ -34,9 +42,9 @@ def test_endpoint(name, method, url, data=None):
         else:
             print(f"❌ FAILED")
             print(f"Error: {response.text[:200]}")
-            
+
         return response.status_code == 200
-        
+
     except requests.exceptions.ConnectionError:
         print("❌ FAILED - Cannot connect to server")
         print("   Make sure server is running: ./run.sh")
@@ -45,41 +53,42 @@ def test_endpoint(name, method, url, data=None):
         print(f"❌ FAILED - {e}")
         return False
 
+
 def main():
     print("╔══════════════════════════════════════════════════════════════╗")
     print("║            Frontend API Endpoint Tests                      ║")
     print("╔══════════════════════════════════════════════════════════════╗")
-    
+
     tests = []
-    
+
     # Test 1: Home page
     tests.append(test_endpoint(
         "Home Page",
         "GET",
         f"{BASE_URL}/"
     ))
-    
+
     # Test 2: Health check
     tests.append(test_endpoint(
         "Health Check",
         "GET",
         f"{BASE_URL}/api/health"
     ))
-    
+
     # Test 3: Detailed health
     tests.append(test_endpoint(
         "Detailed Health",
         "GET",
         f"{BASE_URL}/api/health/detailed"
     ))
-    
+
     # Test 4: Stats
     tests.append(test_endpoint(
         "Stats Endpoint",
         "GET",
         f"{BASE_URL}/api/stats"
     ))
-    
+
     # Test 5: Ask question (only if database is ready)
     tests.append(test_endpoint(
         "Ask Question",
@@ -91,7 +100,7 @@ def main():
             "file_filter": "all"
         }
     ))
-    
+
     print(f"\n{'='*60}")
     print("SUMMARY")
     print(f"{'='*60}")
@@ -99,7 +108,7 @@ def main():
     total = len(tests)
     print(f"✅ Passed: {passed}/{total}")
     print(f"❌ Failed: {total - passed}/{total}")
-    
+
     if passed == total:
         print("\n🎉 All tests passed! Frontend is working correctly!")
     elif passed >= 3:
@@ -110,6 +119,7 @@ def main():
         print("   1. Server is running: ./run.sh")
         print("   2. LM Studio is running")
         print("   3. Documents are processed")
+
 
 if __name__ == "__main__":
     main()

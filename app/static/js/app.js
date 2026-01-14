@@ -158,6 +158,9 @@ async function submitQuery(query) {
         } else {
             await regularQuery(query, includeSources, deepSearch, docFilter);
         }
+
+        // Optional: update retrieval debug overlay after query completes (reflects exact retrieval)
+        await maybeUpdateRetrievalDebug(query);
     } catch (error) {
         console.error('Query failed:', error);
         showError('Failed to get response. Please try again.');
@@ -167,270 +170,171 @@ async function submitQuery(query) {
     }
 }
 
-async function streamQuery(query, includeSources, deepSearch, docFilter) {
-    const response = await fetchWithTimeout(`${API_BASE}/api/ask/stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            question: query,
-            include_sources: includeSources,
-            file_filter: docFilter || 'all',
-            deep_search: Boolean(deepSearch)
-        })
-    }, 120000);
-
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-    }
-
-    const reader = response.body?.getReader?.();
-    if (!reader) {
-        throw new Error('Streaming not supported by this browser/response');
-    }
-
-    const decoder = new TextDecoder();
-    let answerText = '';
-    let sources = [];
-    let metadata = {};
-
-    // Show answer card with streaming cursor
-    showAnswerCard();
-    elements.answerText().innerHTML = '<span class="streaming-cursor"></span>';
-
-    // If the server takes long to emit the first token, show a message
-    let gotAnyToken = false;
-    const firstTokenTimer = setTimeout(() => {
-        if (!gotAnyToken) {
-            elements.answerText().innerHTML = '<p class="text-muted">Still working… retrieving sources and generating an answer.</p><span class="streaming-cursor"></span>';
-        }
-    }, 2000);
-
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-
-            const payload = line.slice(6).trim();
-            if (!payload) continue;
-
-            try {
-                const evt = JSON.parse(payload);
-
-                if (evt.type === 'token') {
-                    const token = typeof evt.data === 'string' ? evt.data : '';
-                    if (!token) continue;
-
-                    gotAnyToken = true;
-                    clearTimeout(firstTokenTimer);
-
-                    answerText += token;
-                    elements.answerText().innerHTML = formatAnswer(answerText) + '<span class="streaming-cursor"></span>';
-                    scrollToBottom();
-                } else if (evt.type === 'sources') {
-                    sources = Array.isArray(evt.data) ? evt.data : [];
-                } else if (evt.type === 'done') {
-                    metadata = (evt.data && typeof evt.data === 'object') ? evt.data : {};
-                    elements.answerText().innerHTML = formatAnswer(answerText);
-                } else if (evt.type === 'error') {
-                    const msg = typeof evt.data === 'string' ? evt.data : 'Streaming error';
-                    throw new Error(msg);
-                }
-            } catch (e) {
-                // Skip invalid JSON lines
-            }
-        }
-    }
-
-    clearTimeout(firstTokenTimer);
-
-    // Update state and UI
-    AppState.currentAnswer = answerText;
-    AppState.sources = sources;
-    updateAnswerMeta(metadata);
-    renderSources(sources);
-
-    fetchRelatedQuestions(query);
-    detectCharacter(query, answerText);
-}
-
-async function regularQuery(query, includeSources, deepSearch, docFilter) {
-    const startTime = Date.now();
-    const response = await fetchWithTimeout(`${API_BASE}/api/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            question: query,
-            include_sources: includeSources,
-            file_filter: docFilter || 'all',
-            deep_search: Boolean(deepSearch)
-        })
-    }, 120000);
-
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    AppState.currentAnswer = data.answer || '';
-    AppState.sources = data.sources || [];
-
-    showAnswerCard();
-    elements.answerText().innerHTML = formatAnswer(AppState.currentAnswer);
-    updateAnswerMeta({ time: elapsed, chars: AppState.currentAnswer.length });
-    renderSources(AppState.sources);
-
-    fetchRelatedQuestions(query);
-    detectCharacter(query, AppState.currentAnswer);
-}
-
-async function fetchRelatedQuestions(query) {
+async function fetchRetrievalDebug(query, k = 10, fileFilter = 'all') {
     try {
-        const response = await fetch(`${API_BASE}/api/related-questions`, {
+        const res = await fetch(`${API_BASE}/api/debug/retrieval`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                query: query,
-                answer: AppState.currentAnswer,
-                sources: AppState.sources,
-                max_questions: 5
+                query,
+                k,
+                file_filter: fileFilter || 'all'
             })
         });
-        if (response.ok) {
-            const data = await response.json();
-
-            // Backend returns { available: boolean, questions: [...] }
-            // Some generators may return objects; normalize to displayable strings.
-            const raw = Array.isArray(data.questions) ? data.questions : [];
-            AppState.relatedQuestions = raw
-                .map((q) => {
-                    if (typeof q === 'string') return q;
-                    if (q && typeof q === 'object') return q.question || q.text || q.query || JSON.stringify(q);
-                    return String(q);
-                })
-                .filter((q) => typeof q === 'string' && q.trim().length > 0)
-                .slice(0, 5);
-
-            renderRelatedQuestions(AppState.relatedQuestions);
-        }
-    } catch (error) {
-        console.error('Failed to fetch related questions:', error);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch (e) {
+        return null;
     }
 }
 
-async function detectCharacter(query, answer) {
-    // Extract character name from query or answer
-    const text = (query + ' ' + answer).toLowerCase();
+function ensureRetrievalDebugUI() {
+    let box = document.getElementById('retrievalDebugBox');
+    if (box) return box;
 
-    // Known main characters to detect
-    const knownCharacters = [
-        'rama', 'sita', 'hanuman', 'ravana', 'lakshmana', 'bharata', 'shatrughna',
-        'dasharatha', 'kausalya', 'kaikeyi', 'sumitra', 'vishwamitra', 'valmiki',
-        'krishna', 'arjuna', 'bhima', 'yudhishthira', 'nakula', 'sahadeva',
-        'draupadi', 'kunti', 'gandhari', 'dhritarashtra', 'pandu', 'bhishma',
-        'drona', 'karna', 'duryodhana', 'shakuni', 'vidura', 'vyasa'
-    ];
+    box = document.createElement('div');
+    box.id = 'retrievalDebugBox';
+    box.style.position = 'fixed';
+    box.style.right = '16px';
+    box.style.bottom = '16px';
+    box.style.width = '460px';
+    box.style.maxWidth = 'calc(100vw - 32px)';
+    box.style.maxHeight = '55vh';
+    box.style.overflow = 'auto';
+    box.style.zIndex = '10000';
+    box.style.display = 'none';
+    box.style.background = 'var(--bg-secondary)';
+    box.style.border = '1px solid var(--border)';
+    box.style.borderRadius = '12px';
+    box.style.boxShadow = '0 10px 30px rgba(0,0,0,0.35)';
 
-    for (const charName of knownCharacters) {
-        if (text.includes(charName)) {
-            try {
-                // Capitalize first letter
-                const capitalizedName = charName.charAt(0).toUpperCase() + charName.slice(1);
-                const response = await fetch(`${API_BASE}/api/characters/${capitalizedName}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    // Backend contract: { available: boolean, found: boolean, character: {...} }
-                    if (data.available && data.found && data.character) {
-                        AppState.detectedCharacter = data.character;
-                        renderCharacterCard(data.character);
-                        return;
-                    }
-                }
-            } catch (error) {
-                // Character detection is optional, fail silently
-            }
-        }
+    document.body.appendChild(box);
+    return box;
+}
+
+function hideRetrievalDebug() {
+    const box = document.getElementById('retrievalDebugBox');
+    if (box) box.style.display = 'none';
+}
+
+function renderRetrievalDebug(debug) {
+    const box = ensureRetrievalDebugUI();
+    if (!box) return;
+
+    if (!debug) {
+        box.style.display = 'none';
+        return;
+    }
+
+    const candidates = Array.isArray(debug.candidates) ? debug.candidates : [];
+    const top = candidates.slice(0, 10);
+
+    const topFiles = {};
+    for (const c of top) {
+        const fn = c?.metadata?.file_name || 'Unknown';
+        topFiles[fn] = (topFiles[fn] || 0) + 1;
+    }
+
+    const routing = debug.routing?.route || debug.routing?.strategy?.name || (debug.routing ? 'routed' : 'none');
+
+    box.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 12px 8px 12px; border-bottom: 1px solid var(--border);">
+            <div style="font-weight:600;">Retrieval Debug</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <span class="text-muted" style="font-size:12px;">k=${escapeHtml(String(debug.k ?? ''))}</span>
+                <button class="icon-btn" title="Close" style="width:32px; height:32px;" onclick="window.hideRetrievalDebug()">×</button>
+            </div>
+        </div>
+
+        <div style="padding:12px;">
+            <div class="text-muted" style="font-size:12px; margin-bottom:8px;">Query</div>
+            <div style="font-size:13px; line-height:1.4; margin-bottom:10px;">${escapeHtml(String(debug.query || ''))}</div>
+
+            <div class="text-muted" style="font-size:12px; margin-bottom:6px;">Normalized</div>
+            <div style="font-size:12px; opacity:0.9; margin-bottom:10px;">${escapeHtml(String(debug.retrieval_query || ''))}</div>
+
+            <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
+                <div><span class="text-muted" style="font-size:12px;">Filter</span><div style="font-size:12px;">${escapeHtml(String(debug.file_filter || 'all'))}</div></div>
+                <div><span class="text-muted" style="font-size:12px;">Routing</span><div style="font-size:12px;">${escapeHtml(String(routing))}</div></div>
+                <div><span class="text-muted" style="font-size:12px;">Reranker</span><div style="font-size:12px;">${debug.reranker?.enabled ? (debug.reranker?.used_in_debug ? 'used' : 'enabled') : 'off'}</div></div>
+            </div>
+
+            <div class="text-muted" style="font-size:12px; margin-bottom:6px;">Top files (top 10)</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+                ${Object.entries(topFiles).slice(0, 6).map(([fn, n]) => `
+                    <span style="font-size:11px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background: var(--bg-tertiary);">${escapeHtml(fn)} (${n})</span>
+                `).join('')}
+            </div>
+
+            <div class="text-muted" style="font-size:12px; margin-bottom:6px;">Candidates</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                ${top.map((c) => {
+                    const meta = c?.metadata || {};
+                    const scores = c?.scores || {};
+                    const file = meta.file_name || 'Unknown';
+                    const page = meta.page ?? '—';
+                    const rank = c?.rank ?? '—';
+                    const fused = (scores.fused ?? scores.vector ?? 0);
+                    const fusedPct = (typeof fused === 'number') ? Math.round(fused * 100) : '—';
+
+                    return `
+                        <div style="padding:10px; border: 1px solid var(--border); border-radius:10px; background: var(--bg-tertiary);">
+                            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:6px;">
+                                <div style="font-size:12px; font-weight:600;">#${escapeHtml(String(rank))} • ${escapeHtml(String(file))}</div>
+                                <div style="font-size:12px;">${escapeHtml(String(fusedPct))}%</div>
+                            </div>
+                            <div class="text-muted" style="font-size:11px; margin-bottom:6px;">Page ${escapeHtml(String(page))} • bm25=${escapeHtml(String(scores.bm25 ?? '—'))} • vec=${escapeHtml(String(scores.vector ?? '—'))} • entity=${escapeHtml(String(scores.entity_boost ?? '—'))} • rerank=${escapeHtml(String(scores.reranker ?? '—'))}</div>
+                            <div style="font-size:12px; line-height:1.35; white-space:pre-wrap;">${escapeHtml(String(meta.text_preview || ''))}</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+
+            <div class="text-muted" style="font-size:11px; margin-top:12px;">Tip: toggle with <code style="font-size:11px;">D</code>. Requires <code style="font-size:11px;">ENABLE_DEBUG_ENDPOINTS=true</code> on the server.</div>
+        </div>
+    `;
+
+    box.style.display = 'block';
+}
+
+let __debugOverlayEnabled = false;
+let __lastDebugPayload = null;
+
+async function maybeUpdateRetrievalDebug(query) {
+    if (!__debugOverlayEnabled) return;
+    const q = (query || '').trim();
+    if (!q) return;
+
+    const docFilter = elements.docSelect()?.value || '';
+    const debug = await fetchRetrievalDebug(q, 10, docFilter || 'all');
+    __lastDebugPayload = debug;
+    renderRetrievalDebug(debug);
+
+    if (!debug) {
+        showToast('Retrieval debug not available (enable ENABLE_DEBUG_ENDPOINTS=true)', 'info');
     }
 }
 
-async function submitFeedback(rating) {
-    try {
-        await fetch(`${API_BASE}/api/feedback`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                query: AppState.currentQuery,
-                answer: AppState.currentAnswer,
-                rating: rating
-            })
-        });
-        showToast('Thank you for your feedback!', 'success');
-    } catch (error) {
-        console.error('Failed to submit feedback:', error);
+function toggleRetrievalDebug() {
+    __debugOverlayEnabled = !__debugOverlayEnabled;
+    if (!__debugOverlayEnabled) {
+        hideRetrievalDebug();
+        return;
     }
+
+    // If we already have a payload, just show it; otherwise fetch for the current query
+    if (__lastDebugPayload) {
+        renderRetrievalDebug(__lastDebugPayload);
+        return;
+    }
+
+    const q = elements.searchInput()?.value || AppState.currentQuery || '';
+    maybeUpdateRetrievalDebug(q);
 }
 
-async function copyAnswer() {
-    try {
-        await navigator.clipboard.writeText(AppState.currentAnswer);
-        showToast('Copied to clipboard!', 'success');
-    } catch (error) {
-        showToast('Failed to copy', 'error');
-    }
-}
-
-async function exportAnswer(format = 'markdown') {
-    try {
-        const response = await fetch(`${API_BASE}/api/export`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                query: AppState.currentQuery,
-                answer: AppState.currentAnswer,
-                sources: AppState.sources,
-                format: format
-            })
-        });
-        if (response.ok) {
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `epic-explorer-${Date.now()}.${format === 'markdown' ? 'md' : format}`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('Exported successfully!', 'success');
-        }
-    } catch (error) {
-        showToast('Export failed', 'error');
-    }
-}
-
-async function getCitation(format = 'bibtex') {
-    try {
-        const response = await fetch(`${API_BASE}/api/cite`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sources: AppState.sources,
-                format: format
-            })
-        });
-        if (response.ok) {
-            const data = await response.json();
-            showCitationModal(data.citation);
-        }
-    } catch (error) {
-        showToast('Failed to generate citation', 'error');
-    }
-}
+// ============================================
+// RETRIEVAL DEBUG (optional)
+// ============================================
 
 // ============================================
 // UI FUNCTIONS
@@ -979,6 +883,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+
+    // Toggle retrieval debug overlay with keypress: "D"
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'd' || e.key === 'D') {
+            // Avoid hijacking typing inside inputs/textareas
+            const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+            if (tag === 'input' || tag === 'textarea') return;
+            toggleRetrievalDebug();
+        }
+    });
 });
 
 // Export functions for HTML onclick handlers
@@ -993,3 +907,4 @@ window.setTheme = setTheme;
 window.closeModal = closeModal;
 window.showSourceDetail = showSourceDetail;
 window.showToast = showToast;
+window.toggleRetrievalDebug = toggleRetrievalDebug;
