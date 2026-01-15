@@ -468,26 +468,26 @@ async def export_results(request: ExportRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/debug/retrieval")
-async def debug_retrieval(request: DebugRetrievalRequest):
-    """Debug retrieval pipeline (hybrid/vector, reranker, epic-bias, etc.).
+async def debug_retrieval(payload: DebugRetrievalRequest):
+    """Retrieval debug endpoint (guarded by ENABLE_DEBUG_ENDPOINTS)."""
+    if os.getenv("ENABLE_DEBUG_ENDPOINTS", "false").lower() != "true":
+        raise HTTPException(status_code=404, detail="Not found")
 
-    This is intended for development/UI diagnostics and returns detailed retrieval metadata.
-    """
     if not rag_backend:
         raise HTTPException(status_code=503, detail="RAG backend not initialized")
 
-    q = (request.query or "").strip()
+    q = (payload.query or "").strip()
     if not q:
         raise HTTPException(status_code=400, detail="Query cannot be empty")
 
     try:
         return await rag_backend.debug_retrieval(
             query=q,
-            k=request.k,
-            file_filter=request.file_filter or "all",
+            k=payload.k,
+            file_filter=payload.file_filter,
         )
     except Exception as e:
-        logger.error(f"Debug retrieval error: {e}", exc_info=True)
+        logger.error(f"Error in debug retrieval: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
 
 
