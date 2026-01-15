@@ -237,6 +237,10 @@ function renderRetrievalDebug(debug) {
 
     const routing = debug.routing?.route || debug.routing?.strategy?.name || (debug.routing ? 'routed' : 'none');
 
+    const epicFilter = debug.epic_filter || null;
+    const epicFilterEnabled = Boolean(epicFilter?.enabled);
+    const intendedEpic = epicFilter?.intended_epic || '';
+
     box.innerHTML = `
         <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 12px 8px 12px; border-bottom: 1px solid var(--border);">
             <div style="font-weight:600;">Retrieval Debug</div>
@@ -257,6 +261,7 @@ function renderRetrievalDebug(debug) {
                 <div><span class="text-muted" style="font-size:12px;">Filter</span><div style="font-size:12px;">${escapeHtml(String(debug.file_filter || 'all'))}</div></div>
                 <div><span class="text-muted" style="font-size:12px;">Routing</span><div style="font-size:12px;">${escapeHtml(String(routing))}</div></div>
                 <div><span class="text-muted" style="font-size:12px;">Reranker</span><div style="font-size:12px;">${debug.reranker?.enabled ? (debug.reranker?.used_in_debug ? 'used' : 'enabled') : 'off'}</div></div>
+                ${epicFilter ? `<div><span class="text-muted" style="font-size:12px;">Epic filter</span><div style="font-size:12px;">${epicFilterEnabled ? 'ON' : 'off'}${intendedEpic ? ' • ' + escapeHtml(String(intendedEpic)) : ''}</div></div>` : ''}
             </div>
 
             <div class="text-muted" style="font-size:12px; margin-bottom:6px;">Top files (top 10)</div>
